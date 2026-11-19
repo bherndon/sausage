@@ -9,11 +9,11 @@
 <style>
   :root{
     --bg:#f6f0e6; --card:#fffaf2; --ink:#2a1d17; --muted:#7a6a5f; --line:#e6d9c6;
-    --brand:#9b2c1f; --brand-ink:#fff; --accent:#d9822b; --done:#b7a99a; --tint:#f3e3cf;
+    --brand:#bf5700; --brand-ink:#fff; --accent:#d9822b; --done:#b7a99a; --tint:#f3e3cf;
   }
   @media (prefers-color-scheme: dark){
     :root{ --bg:#1b1512; --card:#251d18; --ink:#f3e9dc; --muted:#b3a291; --line:#3a2e26;
-      --brand:#c4452f; --accent:#e89a45; --done:#6f6257; --tint:#33271f; }
+      --brand:#c8641a; --accent:#e89a45; --done:#6f6257; --tint:#33271f; }
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -21,11 +21,17 @@
   header h1{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:28px;margin:0;letter-spacing:.5px}
   header p{margin:4px 0 0;opacity:.85;font-size:14px}
   main{max-width:640px;margin:0 auto;padding:16px}
-  .picker{position:relative;margin-bottom:14px}
-  .picker select{width:100%;appearance:none;-webkit-appearance:none;background:var(--card);color:var(--ink);
-    border:1.5px solid var(--line);border-radius:14px;padding:14px 44px 14px 16px;font:700 18px Inter,sans-serif}
-  .picker::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
-    border:solid var(--muted);border-width:0 2.5px 2.5px 0;transform:rotate(45deg);pointer-events:none}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .pill{position:relative;display:inline-flex;align-items:center;max-width:100%;background:var(--card);color:var(--ink);
+    border:1.5px solid var(--line);border-radius:999px;padding:9px 32px 9px 15px;font:600 14px Inter,sans-serif}
+  .pill .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+  .pill::after{content:"";position:absolute;right:14px;top:50%;width:6px;height:6px;margin-top:-5px;
+    border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);pointer-events:none}
+  .pill.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .pill.on::after{border-color:#fff}
+  .pill:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+  .rname{font:700 22px Inter,sans-serif;margin:0 0 12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
   .meat label{display:block;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
   .meat-row{display:flex;align-items:center;gap:10px;margin-top:8px}
@@ -68,9 +74,10 @@
   <p>Pick a recipe, enter your amount, and every ingredient scales.</p>
 </header>
 <main>
-  <div class="picker"><select id="pick" aria-label="Recipe"></select></div>
+  <nav class="pills" id="pills" aria-label="Recipe categories"></nav>
 
   <section class="card meat">
+    <h2 class="rname" id="rname"></h2>
     <label for="qty" id="qtyLabel">Total meat</label>
     <div class="meat-row">
       <button class="step" id="minus" aria-label="Less">−</button>
@@ -338,21 +345,42 @@ let current = byId(location.hash.slice(1)) || byId(store.get("recipe")) || RECIP
 let state = store.get("state2") || {};
 
 const $ = id => document.getElementById(id);
-const pick = $("pick"), list = $("list"), qty = $("qty");
+const pills = $("pills"), list = $("list"), qty = $("qty");
 
 function rs(){ return state[current.id] || (state[current.id] = {q: current.start, done: []}); }
 function save(){ store.set("state2", state); store.set("recipe", current.id); }
 
 /* ---------- Rendering ---------- */
+const SHORT = {
+  "Family recipes (per lb of meat)":"Family",
+  "Pork & venison sausages (by weight)":"Pork & Venison",
+  "Flavored sausages (by weight)":"Flavored",
+  "Burgers (by weight)":"Burgers",
+  "Jerky":"Jerky",
+  "BBQ sauces, rubs & brines":"BBQ",
+  "BBQ sides":"Sides"
+};
+const pillSelects = {};
 function buildPicker(){
   const groups = {};
   RECIPES.forEach(r => (groups[r.group] = groups[r.group] || []).push(r));
   Object.entries(groups).forEach(([g, rs]) => {
-    const og = document.createElement("optgroup"); og.label = g;
-    rs.forEach(r => { const o = new Option(r.name, r.id); og.appendChild(o); });
-    pick.appendChild(og);
+    const wrap = document.createElement("span"); wrap.className = "pill";
+    const sel = document.createElement("select"); sel.setAttribute("aria-label", g);
+    const ph = new Option(SHORT[g] || g, ""); ph.disabled = true; sel.appendChild(ph);
+    rs.forEach(r => sel.appendChild(new Option(r.name, r.id)));
+    sel.onchange = () => { current = byId(sel.value); history.replaceState(null,"","#"+current.id); renderAll(); };
+    const lbl = document.createElement("span"); lbl.className = "lbl"; lbl.textContent = SHORT[g] || g;
+    wrap.appendChild(lbl); wrap.appendChild(sel); pills.appendChild(wrap);
+    pillSelects[g] = sel;
   });
-  pick.onchange = () => { current = byId(pick.value); history.replaceState(null,"","#"+current.id); renderAll(); };
+}
+function syncPills(){
+  Object.entries(pillSelects).forEach(([g, sel]) => {
+    const on = g === current.group;
+    sel.value = on ? current.id : "";
+    sel.parentNode.classList.toggle("on", on);
+  });
 }
 
 function setQty(n){
@@ -394,7 +422,8 @@ function renderList(){
 
 function renderAll(){
   const m = MODES[current.mode];
-  pick.value = current.id;
+  syncPills();
+  $("rname").textContent = current.name;
   $("qtyLabel").textContent = m.label;
   $("qtyUnit").textContent = m.unit;
   qty.step = m.step;
