@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herndon Sausage Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f0e6; --card:#fffaf2; --ink:#2a1d17; --muted:#7a6a5f; --line:#e6d9c6;
+    --brand:#9b2c1f; --brand-ink:#fff; --accent:#d9822b; --done:#b7a99a; --tint:#f3e3cf;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#1b1512; --card:#251d18; --ink:#f3e9dc; --muted:#b3a291; --line:#3a2e26;
+      --brand:#c4452f; --accent:#e89a45; --done:#6f6257; --tint:#33271f; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  header{background:var(--brand);color:var(--brand-ink);padding:22px 18px 18px}
+  header h1{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:28px;margin:0;letter-spacing:.5px}
+  header p{margin:4px 0 0;opacity:.85;font-size:14px}
+  main{max-width:640px;margin:0 auto;padding:16px}
+  .picker{position:relative;margin-bottom:14px}
+  .picker select{width:100%;appearance:none;-webkit-appearance:none;background:var(--card);color:var(--ink);
+    border:1.5px solid var(--line);border-radius:14px;padding:14px 44px 14px 16px;font:700 18px Inter,sans-serif}
+  .picker::after{content:"";position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
+    border:solid var(--muted);border-width:0 2.5px 2.5px 0;transform:rotate(45deg);pointer-events:none}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  .meat label{display:block;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .meat-row{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .meat input{flex:1;min-width:0;font:700 34px Inter,sans-serif;color:var(--ink);background:transparent;
+    border:none;border-bottom:3px solid var(--accent);padding:2px 0;outline:none}
+  .meat .unit{font:600 18px Inter,sans-serif;color:var(--muted)}
+  .step{width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);
+    color:var(--ink);font:600 22px Inter,sans-serif;cursor:pointer}
+  .quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+  .quick button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;
+    padding:6px 10px;font:500 13px Inter,sans-serif;cursor:pointer}
+  .note{font-size:13px;color:var(--muted);margin:10px 0 0}
+  .tips{background:var(--tint);border-radius:12px;padding:10px 12px;margin-top:12px;font-size:13px}
+  .tips:empty{display:none}
+  .tips p{margin:0 0 6px}.tips p:last-child{margin:0}
+  ul.ing{list-style:none;margin:0;padding:0}
+  .ing li{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+  .ing li:last-child{border-bottom:none}
+  .ing li.sec{cursor:default;padding:14px 2px 4px;border-bottom:none;font-size:12px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .box{flex:0 0 22px;height:22px;border-radius:6px;border:2px solid var(--accent);display:grid;place-items:center}
+  .ing li.done .box{background:var(--accent)}
+  .ing li.done .box::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+  .name{flex:1;min-width:0}
+  .name b{display:block;font-weight:600}
+  .name small{color:var(--muted);font-size:12px}
+  .amt{text-align:right;white-space:nowrap}
+  .amt b{font-size:20px;font-weight:700}
+  .amt small{display:block;color:var(--muted);font-size:12px}
+  .ing li.done .name b,.ing li.done .amt b{color:var(--done);text-decoration:line-through}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  .linkbtn{background:none;border:none;color:var(--brand);font:600 14px Inter,sans-serif;cursor:pointer;padding:6px 0}
+  .src{font-size:12px;color:var(--muted);text-align:center;margin:18px 0 30px}
+  .src a{color:inherit}
+</style>
+</head>
+<body>
+<header>
+  <h1>Herndon Sausage</h1>
+  <p>Pick a recipe, enter your amount, and every ingredient scales.</p>
+</header>
+<main>
+  <div class="picker"><select id="pick" aria-label="Recipe"></select></div>
+
+  <section class="card meat">
+    <label for="qty" id="qtyLabel">Total meat</label>
+    <div class="meat-row">
+      <button class="step" id="minus" aria-label="Less">−</button>
+      <input id="qty" type="number" inputmode="decimal" min="0" step="0.5">
+      <span class="unit" id="qtyUnit">lbs</span>
+      <button class="step" id="plus" aria-label="More">+</button>
+    </div>
+    <div class="quick" id="quick"></div>
+    <p class="note" id="desc"></p>
+    <div class="tips" id="tips"></div>
+  </section>
+
+  <section class="card">
+    <ul class="ing" id="list"></ul>
+    <div class="foot">
+      <small style="color:var(--muted)">Tap an ingredient to check it off.</small>
+      <button class="linkbtn" id="reset">Clear checks</button>
+    </div>
+  </section>
+
+  <p class="src" id="src"></p>
+</main>
+
+<script>
+/* ---------- Sources ---------- */
+const SHEETS = {
+  herndon: ["Herndon Sausage", "https://docs.google.com/spreadsheets/d/1PKu_M5QNbqcWKr-hHxbPBNExPWAbYfaGRQXtMjkVXpg/edit"],
+  sr:      ["Sausage Recipes", "https://docs.google.com/spreadsheets/d/1XeGXeD6-U8Nal5G4MpYWSpU432kZI7VrVDN1BdcaO08/edit"],
+  bth:     ["BTH Flavored Sausages", "https://docs.google.com/spreadsheets/d/1XhR1N2BTL6E2E-gP1d_TopNLFD98DAuokcZOMEDWTgQ/edit"],
+  tbh:     ["TBH Homemade Sausages", "https://docs.google.com/spreadsheets/d/1o0wevOZ_oI7fTnPyBG3vqPaq2MHQHJgYk6KKNK4vTY8/edit"],
+  jerky:   ["Jerky Recipe", "https://docs.google.com/spreadsheets/d/14my98TSc-Pv6zmNpZn5H1D3B0GgCR4QaulkR1bLCoJ4/edit"],
+  bbq:     ["BBQ Recipes", "https://drive.google.com/file/d/0B1wHL0wlclztTFRYeFZEVUM1dFcxVWY3emhQREZXbXUwN1Jv/view"]
+};
+
+/* ---------- Input modes ---------- */
+const MODES = {
+  meat:   {label:"Total meat", unit:"lbs", quick:[5,10,25,50,100], step:1},
+  batch:  {label:"Total batch weight", unit:"lbs", quick:[5,10,25,50,100], step:1},
+  season: {label:"Seasoning to make", unit:"lbs", quick:[0.5,1,2,5], step:0.5},
+  mult:   {label:"Batches", unit:"×", quick:[0.5,1,2,3,4], step:0.5}
+};
+
+const CURE_TIP = "Add cure only if you're going to smoke it. Always cook to 170°F (smoked: 125–145°F in the smoker, then to 165–170°F and chill to 40°F fast).";
+const BURGER_TIP = "Season with your favorite burger seasoning. Grind everything through a 1/4\" plate twice.";
+
+/* Each item: [name, amount at base, unit, note?]. A string item starts a sub-section.
+   Units: tsp/tbsp/cup = volume, lb/oz = weight, anything else = a count. */
+const RECIPES = [
+  /* ---- By the pound (volume measures) ---- */
+  { id:"herndon", group:"Family recipes (per lb of meat)", name:"Herndon Sausage", mode:"meat", base:1, start:25, src:"herndon",
+    desc:"Ground pork, or a 55/45 pork/venison mix.",
+    items:[["Salt",0.40,"tbsp"],["Black pepper",0.72,"tsp","50/50 coarse and fine"],["White pepper",0.06,"tsp"],
+      ["Red pepper",0.07,"tsp"],["Mustard seed",0.20,"tsp"],["Chili powder",0.05,"tsp"],["Garlic powder",0.03,"tsp"],
+      ["Sage",0.03,"tsp","optional"]]},
+  { id:"jerrell", group:"Family recipes (per lb of meat)", name:"Jerrell Texas Sausage", mode:"meat", base:1, start:25, src:"sr",
+    desc:"Ground pork.",
+    items:[["Salt",0.40,"tbsp"],["Black pepper",0.72,"tsp"],["Red pepper",0.06,"tsp"],["Mustard seed",0.18,"tsp"],
+      ["Chili powder",0.04,"tsp"],["Garlic powder",0.02,"tsp"],["Sage",0.02,"tsp","optional"]]},
+  { id:"hotlink", group:"Family recipes (per lb of meat)", name:"Hot Link", mode:"meat", base:1, start:25, src:"sr",
+    desc:"Ground pork.",
+    items:[["Coarse ground black pepper",0.31,"tbsp"],["Crushed red pepper",0.31,"tbsp"],["Cayenne",0.31,"tbsp"],
+      ["Hungarian paprika",0.31,"tbsp"],["Morton's Tender Quick",0.46,"tbsp"],["Whole mustard seeds",0.31,"tbsp"],
+      ["Minced fresh garlic",0.57,"tbsp"],["Granulated garlic",0.15,"tbsp"],["Ground bay leaves",0.15,"tsp"],
+      ["Coriander",0.15,"tsp"],["Ground thyme",0.15,"tsp"]]},
+  { id:"bologna", group:"Family recipes (per lb of meat)", name:"Deer Bologna", mode:"meat", base:5, start:5, src:"herndon",
+    desc:"Written for 5 lbs of meat.",
+    items:[["Morton Tender Quick",0.33,"cup"],["Black pepper",1,"tbsp"],["Accent",1,"tbsp"],["Ground mustard",1,"tbsp"],
+      ["Onion powder",0.5,"tbsp"],["Ground red pepper",0.5,"tbsp"],["Garlic powder",0.5,"tbsp"],["Liquid smoke",6,"tbsp"],
+      ["Brown sugar",1,"cup"],["Mace",0.5,"tbsp","optional"],["King Syrup (or molasses)",0.5,"cup"],
+      ["Shredded cheddar",0.67,"cup","optional"]]},
+  { id:"original", group:"Family recipes (per lb of meat)", name:"Original Herndon (50 lb)", mode:"meat", base:50, start:50, src:"herndon",
+    desc:"The original batch recipe, written for 50 lbs of meat.",
+    items:[["Salt",0.75,"lb"],["Black pepper",3,"oz"],["Red pepper",3,"tsp"],["Mustard seeds",1,"oz"],
+      ["Chili powder",2,"tsp"],["Garlic powder",1,"tsp"]]},
+
+  /* ---- Butcher formulas (by weight) ---- */
+  { id:"pv-regular", group:"Pork & venison sausages (by weight)", name:"Pork & Venison Regular", mode:"batch", base:100, start:25, src:"tbh",
+    tips:[CURE_TIP],
+    items:[["Pork butt",45,"lb"],["Venison",50,"lb"],["Fresh garlic",0.8,"lb"],["Black pepper",0.48,"lb"],["Salt",1.8,"lb"],
+      ["Paprika",0.05,"lb"],["Cayenne pepper",0.11,"lb"],["Sugar",0.5,"lb"],["Water",2.5,"lb"],["Cure",0.15,"lb","if smoked"]]},
+  { id:"pv-jalapeno", group:"Pork & venison sausages (by weight)", name:"Jalapeño & Cheese", mode:"batch", base:100, start:25, src:"tbh",
+    tips:[CURE_TIP],
+    items:[["Pork butt",45,"lb"],["Venison",45,"lb"],["Granulated garlic",0.15,"lb"],["Black pepper",0.48,"lb"],["Salt",1.8,"lb"],
+      ["Sugar",0.5,"lb"],["Dry jalapeños",0.65,"lb","or 2× the weight in fresh"],["Cheddar cheese",8.5,"lb"],["Water",3.5,"lb"],
+      ["Cure",0.15,"lb","if smoked"]]},
+  { id:"pv-spicy", group:"Pork & venison sausages (by weight)", name:"Venison Pork Spicy", mode:"batch", base:10, start:25, src:"tbh",
+    tips:[CURE_TIP],
+    items:[["Pork butt",4.8,"lb"],["Venison",4.8,"lb"],["Crushed red pepper",0.03,"lb"],["Garlic",0.015,"lb"],["Black pepper",0.04,"lb"],
+      ["Salt",0.18,"lb"],["Paprika",0.012,"lb"],["Cayenne pepper",0.011,"lb"],["Sugar",0.05,"lb"],["Water",0.25,"lb"],
+      ["Cure",0.015,"lb","if smoked"]]},
+  { id:"andouille", group:"Pork & venison sausages (by weight)", name:"Andouille", mode:"batch", base:10, start:25, src:"tbh",
+    tips:[CURE_TIP],
+    items:[["Pork butt",4.8,"lb"],["Venison",4.8,"lb"],["Garlic",0.018,"lb"],["Sage",0.01,"lb"],["Black pepper",0.028,"lb"],
+      ["Crushed red pepper",0.012,"lb"],["Ginger",0.005,"lb"],["Salt",0.18,"lb"],["Cayenne pepper",0.011,"lb"],["Sugar",0.05,"lb"],
+      ["Water",0.25,"lb"],["Cure",0.015,"lb","if smoked"]]},
+  { id:"bratwurst", group:"Pork & venison sausages (by weight)", name:"Fresh Bratwurst", mode:"batch", base:10, start:25, src:"tbh",
+    tips:["Fresh sausage: no cure. Stuff, package and freeze."],
+    items:[["Pork butt",4.8,"lb"],["Venison",4.8,"lb"],["Garlic powder",0.012,"lb"],["Black pepper",0.048,"lb"],["Salt",0.17,"lb"],
+      ["Mace",0.006,"lb"],["Marjoram",0.006,"lb"],["Sugar",0.05,"lb"],["Fresh onion",0.035,"lb"],["Water",0.25,"lb"]]},
+  { id:"pan", group:"Pork & venison sausages (by weight)", name:"Fresh Pan Sausage", mode:"batch", base:10, start:25, src:"tbh",
+    tips:["Fresh sausage: no cure. Stuff, package and freeze."],
+    items:[["Pork butt",4.8,"lb"],["Venison",4.8,"lb"],["Garlic",0.015,"lb"],["Black pepper",0.048,"lb"],["Salt",0.175,"lb"],
+      ["Ginger",0.003,"lb"],["Nutmeg",0.003,"lb"],["Sugar",0.05,"lb"],["Thyme",0.005,"lb"],["Crushed red pepper",0.03,"lb"],
+      ["Sage",0.016,"lb"],["Water",0.25,"lb"]]},
+  { id:"hotdogs", group:"Pork & venison sausages (by weight)", name:"Hot Dogs", mode:"batch", base:10, start:25, src:"tbh",
+    tips:["Grind 1/2\" then 1/8\" twice. Stuff in sheep casing.", CURE_TIP],
+    items:[["Pork butt",4.7,"lb"],["Venison",4.7,"lb"],["Garlic powder",0.014,"lb"],["Paprika",0.012,"lb"],["Nutmeg",0.011,"lb"],
+      ["Salt",0.18,"lb"],["Ground coriander",0.012,"lb"],["Ginger",0.004,"lb"],["Sugar",0.05,"lb"],["Onion powder",0.01,"lb"],
+      ["Cure",0.015,"lb"],["Erythorbate",0.01,"lb"],["Water",0.35,"lb"]]},
+  { id:"italian", group:"Pork & venison sausages (by weight)", name:"Italian", mode:"batch", base:10, start:25, src:"tbh",
+    tips:[CURE_TIP],
+    items:[["Pork butt",4.7,"lb"],["Venison",4.7,"lb"],["Garlic powder",0.018,"lb"],["Paprika",0.05,"lb"],["Whole fennel",0.02,"lb"],
+      ["Salt",0.18,"lb"],["Ground coriander",0.012,"lb"],["Sugar",0.05,"lb"],["Black pepper",0.025,"lb"],["Water",0.35,"lb"],
+      ["Crushed red pepper",0.01,"lb"],["Cure",0.015,"lb"]]},
+  { id:"chorizo", group:"Pork & venison sausages (by weight)", name:"Fresh Chorizo", mode:"batch", base:10, start:10, src:"tbh",
+    tips:["Fresh sausage: no cure."],
+    items:[["Pork butt",9.8,"lb"],["Chili powder",0.045,"lb"],["Oregano",0.012,"lb"],["Cumin",0.012,"lb"],["Ground onion",0.012,"lb"],
+      ["Granulated garlic",0.012,"lb"],["Black pepper",0.03,"lb"],["Salt",0.18,"lb"],["Paprika",0.1,"lb"],["Crushed red pepper",0.06,"lb"],
+      ["Sugar",0.05,"lb"],["Vinegar",0.04,"lb"],["Water",0.06,"lb"]]},
+  { id:"banger", group:"Pork & venison sausages (by weight)", name:"English Banger", mode:"batch", base:10, start:10, src:"tbh",
+    tips:["Fresh sausage: no cure."],
+    items:[["Pork",4.7,"lb"],["Venison",4.7,"lb"],["Bread crumb",0.05,"lb"],["White pepper",0.0312,"lb"],["Salt",0.18,"lb"],
+      ["Ginger",0.0156,"lb"],["Mace",0.0234,"lb"],["Sugar",0.1,"lb"],["Honey",0.075,"lb"],["Sage",0.0078,"lb"],["Water",0.15,"lb"]]},
+  { id:"salami", group:"Pork & venison sausages (by weight)", name:"Salami Lunchmeat", mode:"batch", base:25, start:25, src:"tbh",
+    tips:["Soak the mustard seed in the water for an hour or two before mixing in.",
+      "Grind 1/2\" then 1/4\". Stuff into large chub casings and poke a pin hole every couple of inches. Dry in the smoker without wood at 100°F for an hour, smoke 3–4 hours at 125°F, cook to 165°F internal and chill to 40°F immediately."],
+    items:[["Pork butt",11.75,"lb"],["Venison",12,"lb"],["Granulated garlic",0.04,"lb"],["Coarse black pepper",0.0875,"lb"],
+      ["Salt",0.4625,"lb"],["Ground coriander",0.0175,"lb"],["Whole mustard seed",0.0275,"lb"],["Sugar",0.125,"lb"],["Water",0.75,"lb"],
+      ["Ground nutmeg",0.0175,"lb"],["Onion powder",0.0175,"lb"],["Cure",0.0375,"lb"]]},
+  { id:"pepperoni", group:"Pork & venison sausages (by weight)", name:"Pepperoni", mode:"batch", base:10, start:10, src:"tbh",
+    tips:["Cook to 165°F internal, dry for 8 hours, then chill to 40°F immediately."],
+    items:[["Pork butt",4.7,"lb"],["Venison",4.8,"lb"],["Granulated garlic",0.013,"lb"],["Coarse black pepper",0.01,"lb"],["Salt",0.19,"lb"],
+      ["Ground fennel",0.007,"lb"],["Ground anise",0.007,"lb"],["Sugar",0.075,"lb"],["Paprika",0.11,"lb"],["Red wine",0.1,"lb"],
+      ["Erythorbate",0.01,"lb"],["Cure",0.015,"lb"],["Citric acid",0.00235,"lb"],["Cayenne pepper",0.0072,"lb"]]},
+
+  /* ---- Flavored ---- */
+  { id:"spinach-feta", group:"Flavored sausages (by weight)", name:"Spinach & Feta", mode:"batch", base:100, start:25, src:"bth",
+    tips:[CURE_TIP],
+    items:[["Pork butt or chicken thigh",45,"lb"],["Venison or chicken breast",50,"lb"],["Fresh garlic",0.35,"lb"],["Black pepper",0.48,"lb"],
+      ["Salt",1.8,"lb"],["Paprika",0.05,"lb"],["Cayenne pepper",0.05,"lb"],["Sugar",0.5,"lb"],["Water",2.5,"lb"],["Cure",0.15,"lb","if smoked"],
+      ["Drained frozen spinach",0.75,"lb"],["Feta crumbles",7,"lb"]]},
+  { id:"apple-cran", group:"Flavored sausages (by weight)", name:"Apple / Cranberry", mode:"batch", base:100, start:25, src:"bth",
+    tips:[CURE_TIP],
+    items:[["Pork butt or chicken thigh",45,"lb"],["Venison or chicken breast",50,"lb"],["Ground nutmeg",0.12,"lb"],["Black pepper",0.35,"lb"],
+      ["Salt",1.8,"lb"],["Cinnamon",0.08,"lb"],["Ginger",0.05,"lb"],["Sugar",0.5,"lb"],["Apple juice concentrate",1,"lb"],
+      ["Cure",0.15,"lb","if smoked"],["Sage",0.07,"lb"],["Dried diced apple / sweet dried cranberry",7,"lb","if using both, half and half"]]},
+  { id:"bacon-cheddar", group:"Flavored sausages (by weight)", name:"Bacon Cheddar", mode:"batch", base:100, start:25, src:"bth",
+    tips:[CURE_TIP],
+    items:[["Pork butt or chicken thigh",45,"lb"],["Venison or chicken breast",50,"lb"],["Bacon",4,"lb"],["Fresh garlic",0.35,"lb"],
+      ["Black pepper",0.48,"lb"],["Salt",1.8,"lb"],["Paprika",0.05,"lb"],["Cayenne pepper",0.05,"lb"],["Sugar",0.5,"lb"],["Water",2.5,"lb"],
+      ["Cure",0.15,"lb","if smoked"],["Cheddar cheese",7,"lb"]]},
+  { id:"tomato-feta", group:"Flavored sausages (by weight)", name:"Sun-Dried Tomato & Feta", mode:"batch", base:100, start:25, src:"bth",
+    tips:[CURE_TIP],
+    items:[["Pork butt or chicken thigh",45,"lb"],["Venison or chicken breast",50,"lb"],["Fresh garlic",0.35,"lb"],["Black pepper",0.48,"lb"],
+      ["Salt",1.8,"lb"],["Paprika",0.05,"lb"],["Cayenne pepper",0.05,"lb"],["Sugar",0.5,"lb"],["Water",2.5,"lb"],["Cure",0.15,"lb","if smoked"],
+      ["Sun-dried tomato",0.5,"lb","soften in the water first"],["Feta crumbles",7,"lb"]]},
+
+  /* ---- Burgers ---- */
+  ...[
+    ["burger-bacon","Bacon Venison",[["Venison",9.3,"lb"],["Bacon",0.7,"lb"]]],
+    ["burger-bacon-cheddar","Bacon Cheddar Venison",[["Venison",8.7,"lb"],["Bacon",0.7,"lb"],["1/4\" diced cheddar",0.6,"lb"]]],
+    ["burger-jalapeno","Jalapeño Cheddar",[["Venison",4.6,"lb"],["Beef chuck",4.65,"lb"],["1/4\" diced cheddar",0.6,"lb"],
+      ["Fresh jalapeño, diced",0.075,"lb"],["Fresh onion, diced",0.075,"lb"]]],
+    ["burger-mushroom","Mushroom Swiss",[["Venison",4.5,"lb"],["Beef chuck",4.5,"lb"],["1/4\" diced Swiss or mozzarella",0.7,"lb"],
+      ["Canned mushroom slices",0.3,"lb"]]],
+    ["burger-blue","Blue Cheese",[["Venison",4.65,"lb"],["Beef chuck",4.65,"lb"],["Blue cheese crumbles",0.7,"lb"]]],
+    ["burger-garlic-feta","Roasted Garlic & Feta",[["Venison",4.6,"lb"],["Beef chuck",4.65,"lb"],["Feta cheese",0.7,"lb"],
+      ["Roasted garlic cloves",0.05,"lb"]]]
+  ].map(([id,name,items]) => ({id, group:"Burgers (by weight)", name, mode:"batch", base:10, start:10, src:"tbh", tips:[BURGER_TIP], items})),
+
+  /* ---- Jerky ---- */
+  { id:"jerky", group:"Jerky", name:"Jerky Seasoning", mode:"season", base:5, start:1, src:"jerky",
+    desc:"Makes a dry rub. Enter how much seasoning you want to mix up.",
+    tips:["Trim all fat and cut into 1/4\" strips about 3\" long. Layer meat and rub in a pan, covering every layer. Cover with foil and refrigerate 24–36 hours.",
+      "Smokehouse: about 150°F, smoke 1 hour, then cook about 10 more hours to your chewiness.",
+      "Dehydrator: dip in liquid smoke first for smoke flavor. Hottest setting (155–165°F) for about 8 hours.",
+      "Teriyaki: marinate in thin teriyaki sauce about 45 minutes before the rub."],
+    items:[["Salt",3.125,"lb"],["Garlic",0.2625,"lb"],["Black pepper",1.425,"lb"],["Onion powder",0.0625,"lb"],
+      ["Brown sugar",0.1,"lb"],["Meat tenderizer",0.0375,"lb"]]},
+
+  /* ---- BBQ ---- */
+  { id:"mustard-sauce", group:"BBQ sauces, rubs & brines", name:"Mustard Sauce", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Yellow mustard",15,"cup"],["Apple cider vinegar",3,"cup"],["Lemon juice",0.75,"cup"],["Corn syrup",0.5,"cup"],
+      ["Molasses",0.5,"cup"],["Butter",2,"sticks"],["Worcestershire",1,"cup"],["Garlic powder",0.25,"cup"],["Onion powder",0.25,"cup"],
+      ["Honey",4,"cup"],["Balsamic",1,"cup"],["Black pepper",0.25,"cup"],["Cayenne",1,"tbsp"],["Liquid smoke",2,"tsp"],
+      ["Brown sugar",3.5,"cup"],["Beer",1,"cans"],["Paprika",1,"tsp"],["Chili powder",1,"tsp"],["Cumin",1,"tsp"],["Ground ginger",0.5,"tsp"]]},
+  { id:"red-sauce", group:"BBQ sauces, rubs & brines", name:"Red Sauce", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Onion",2,"whole"],["Garlic",24,"cloves"],["Tomato purée",12,"cup"],["Tomato paste",3,"cup"],["Apple cider vinegar",4.5,"cup"],
+      ["Corn syrup",0.25,"cup"],["Worcestershire",1.5,"cup"],["Apple juice",3,"cup"],["Yellow mustard",0.33,"cup"],["Honey",1.5,"cup"],
+      ["Black pepper",0.33,"cup"],["Liquid smoke",2,"tsp"],["Brown sugar",1,"cup"],["Beer",1,"cans"],["Salt",1,"tbsp"],
+      ["Chili powder",1,"cup"],["Beef base",1.5,"tbsp"],["Celery salt",0.25,"cup"]]},
+  { id:"pork-injection", group:"BBQ sauces, rubs & brines", name:"Pork Injection", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Apple cider vinegar",5,"cup"],["Apple juice",3,"jugs"],["Worcestershire",1,"cup"],["Onion",1,"whole"],["Garlic",12,"cloves"],["Salt",1,"cup"]]},
+  { id:"pork-rub", group:"BBQ sauces, rubs & brines", name:"Pork Rub", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Pepper",8,"cup"],["Raw sugar",12,"cup"],["Salt",6,"cup"],["Celery salt",1,"cup"],["Paprika",1,"cup"],
+      ["Chili powder",1.5,"cup"],["Onion powder",1,"cup"],["Garlic powder",1,"cup"]]},
+  { id:"brisket-rub", group:"BBQ sauces, rubs & brines", name:"Brisket Rub", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Pepper",3,"cup"],["Salt",1.5,"cup"],["Paprika",0.25,"cup"],["Chili powder",2,"tbsp"],["Onion powder",0.5,"cup"],["Garlic powder",0.5,"cup"]]},
+  { id:"chicken-brine", group:"BBQ sauces, rubs & brines", name:"Chicken Brine", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Beer",12,"cans"],["Apple cider vinegar",4,"cup"],["Honey",2,"cup"],["Chicken brine",4,"cup"],["Apple juice",4,"cup"]]},
+  { id:"chicken-wings", group:"BBQ sauces, rubs & brines", name:"Chicken Wings", mode:"mult", base:1, start:1, src:"bbq",
+    items:["Sauce",["Butter",1,"lb"],["Chipotle in adobo",3,"cans"],["Apple cider vinegar",0.25,"cup"],["Balsamic vinegar",0.25,"cup"],["Honey",0.5,"cup"],
+      "Rub",["Honey rub",3,"cup"],["HDD",2,"cup"]]},
+  { id:"chicken-thighs", group:"BBQ sauces, rubs & brines", name:"Chicken Thighs", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Honey rub",3,"cup"],["Cooper's",1,"cup"],["Butter",1,"lb"],["Honey",1,"cup"]]},
+
+  { id:"mac", group:"BBQ sides", name:"Mac and Cheese", mode:"mult", base:1, start:1, src:"bbq",
+    desc:"From Southern Living Ultimate BBQ, p. 288.",
+    items:[["Macaroni",1,"lb"],["Butter",4,"tbsp"],["Wondra flour",4,"tbsp"],["Half and half",2,"cup"],["2% milk",2,"cup"],
+      ["Cooper's",3,"tsp"],["Shredded cheddar",7,"cup"],["Panko",1.5,"cup"]]},
+  { id:"beans", group:"BBQ sides", name:"Pinto Beans (1 pan)", mode:"mult", base:1, start:1, src:"bbq",
+    desc:"Franklin's beans, p. 196.",
+    items:[["Dried pinto beans",1,"lb"],["Yellow onion",0.5,"whole"],["Bean seasoning",0.5,"cup","see Bean Seasoning recipe"]]},
+  { id:"bean-seasoning", group:"BBQ sides", name:"Bean Seasoning (makes 2 cups)", mode:"mult", base:1, start:1, src:"bbq",
+    items:[["Chili powder",1,"cup"],["Kosher salt",0.5,"cup"],["Coarse black pepper",0.25,"cup"],["Onion powder",2,"tbsp"],
+      ["Garlic powder",2,"tbsp"],["Ground cumin",1,"tsp"]]},
+  { id:"slaw", group:"BBQ sides", name:"Cole Slaw (1¼ pans)", mode:"mult", base:1, start:1, src:"bbq",
+    desc:"From Paul Kirk's BBQ, p. 437.",
+    items:[["Shredded green cabbage",2,"lb"],["Red onion",0.5,"whole"],["Shredded carrot",0.25,"cup"],["Sugar",1,"cup"],
+      ["Garlic salt",2,"tbsp"],["Pepper",1,"tsp"],["Celery seed",1,"tsp"],["Cider vinegar",1,"cup"],["Lemon juice",3,"tbsp"]]}
+];
+
+/* ---------- Formatting ---------- */
+const TSP = {tsp:1, tbsp:3, cup:48};
+const fmt = (n, d) => {
+  let s = n.toFixed(d);
+  if (s.includes(".")) s = s.replace(/0+$/,"").replace(/\.$/,"");
+  return s;
+};
+const plural = (n, word) => n === 1 ? word.replace(/s$/,"") : word;
+
+function volume(tsp){
+  const tbsp = tsp/3, cups = tsp/48;
+  if (tsp < 3)  return {main: fmt(tsp,2)+" tsp", alt: fmt(tbsp,2)+" tbsp"};
+  if (tsp < 12) return {main: fmt(tbsp,1)+" tbsp", alt: fmt(tsp,1)+" tsp"};
+  const main = fmt(cups,2)+" "+plural(+fmt(cups,2),"cups");
+  if (cups >= 4) return {main, alt: fmt(cups/4,2)+" qt · "+fmt(cups/16,2)+" gal"};
+  return {main, alt: fmt(tbsp,1)+" tbsp · "+fmt(tsp,1)+" tsp"};
+}
+function weight(oz){
+  const g = oz*28.3495;
+  if (oz >= 16){
+    const lb = Math.floor(oz/16), rem = oz - lb*16;
+    return {main: fmt(oz/16,2)+" lb", alt: rem >= 0.05 ? `${lb} lb ${fmt(rem,1)} oz` : fmt(g/1000,2)+" kg"};
+  }
+  return {main: fmt(oz, oz < 1 ? 2 : 1)+" oz", alt: fmt(g, g < 10 ? 1 : 0)+" g"};
+}
+function count(n, unit){
+  return {main: fmt(n,2)+(unit==="whole" ? "" : " "+plural(+fmt(n,2),unit)), alt:""};
+}
+function amount(q, unit){
+  if (unit in TSP) return volume(q*TSP[unit]);
+  if (unit === "lb") return weight(q*16);
+  if (unit === "oz") return weight(q);
+  return count(q, unit);
+}
+
+/* ---------- State ---------- */
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const byId = id => RECIPES.find(r => r.id === id);
+let current = byId(location.hash.slice(1)) || byId(store.get("recipe")) || RECIPES[0];
+let state = store.get("state2") || {};
+
+const $ = id => document.getElementById(id);
+const pick = $("pick"), list = $("list"), qty = $("qty");
+
+function rs(){ return state[current.id] || (state[current.id] = {q: current.start, done: []}); }
+function save(){ store.set("state2", state); store.set("recipe", current.id); }
+
+/* ---------- Rendering ---------- */
+function buildPicker(){
+  const groups = {};
+  RECIPES.forEach(r => (groups[r.group] = groups[r.group] || []).push(r));
+  Object.entries(groups).forEach(([g, rs]) => {
+    const og = document.createElement("optgroup"); og.label = g;
+    rs.forEach(r => { const o = new Option(r.name, r.id); og.appendChild(o); });
+    pick.appendChild(og);
+  });
+  pick.onchange = () => { current = byId(pick.value); history.replaceState(null,"","#"+current.id); renderAll(); };
+}
+
+function setQty(n){
+  rs().q = Math.max(0, Math.round(n*100)/100);
+  qty.value = rs().q; renderList(); save();
+}
+
+function baseLabel(){
+  const m = current.mode, b = current.base;
+  if (m === "mult") return "per batch";
+  if (m === "season") return `per ${b} lbs seasoning`;
+  if (m === "meat") return b === 1 ? "per lb" : `per ${b} lbs`;
+  return `per ${b} lb batch`;
+}
+
+function renderList(){
+  const s = rs(), factor = (parseFloat(s.q)||0) / current.base;
+  list.innerHTML = "";
+  current.items.forEach((it, i) => {
+    const li = document.createElement("li");
+    if (typeof it === "string"){ li.className = "sec"; li.textContent = it; list.appendChild(li); return; }
+    const [name, amt, unit, note] = it;
+    const out = amount(amt*factor, unit), base = amount(amt, unit);
+    if (s.done.includes(i)) li.className = "done";
+    li.innerHTML = `<span class="box"></span><span class="name"><b></b><small></small></span>
+      <span class="amt"><b></b><small></small></span>`;
+    li.querySelector(".name b").textContent = name;
+    li.querySelector(".name small").textContent = `${base.main} ${baseLabel()}` + (note ? " · "+note : "");
+    li.querySelector(".amt b").textContent = out.main;
+    li.querySelector(".amt small").textContent = out.alt;
+    li.onclick = () => {
+      const k = s.done.indexOf(i);
+      k >= 0 ? s.done.splice(k,1) : s.done.push(i);
+      li.classList.toggle("done"); save();
+    };
+    list.appendChild(li);
+  });
+}
+
+function renderAll(){
+  const m = MODES[current.mode];
+  pick.value = current.id;
+  $("qtyLabel").textContent = m.label;
+  $("qtyUnit").textContent = m.unit;
+  qty.step = m.step;
+  const q = $("quick"); q.innerHTML = "";
+  m.quick.forEach(n => {
+    const b = document.createElement("button");
+    b.textContent = current.mode === "mult" ? (n === 0.5 ? "½×" : n+"×") : n+" lb";
+    b.onclick = () => setQty(n);
+    q.appendChild(b);
+  });
+  let desc = current.desc || "";
+  if (current.mode === "batch") desc = (desc ? desc+" " : "") + "Enter the total batch weight; the meat amounts are listed too.";
+  $("desc").textContent = desc;
+  $("tips").innerHTML = "";
+  (current.tips || []).forEach(t => { const p = document.createElement("p"); p.textContent = t; $("tips").appendChild(p); });
+  const [title, url] = SHEETS[current.src];
+  $("src").innerHTML = `From your <a href="${url}"></a> sheet.`;
+  $("src").querySelector("a").textContent = title;
+  qty.value = rs().q;
+  renderList(); save();
+}
+
+qty.addEventListener("input", () => { rs().q = qty.value; renderList(); save(); });
+$("minus").onclick = () => setQty((parseFloat(rs().q)||0) - MODES[current.mode].step);
+$("plus").onclick  = () => setQty((parseFloat(rs().q)||0) + MODES[current.mode].step);
+$("reset").onclick = () => { rs().done = []; renderList(); save(); };
+window.addEventListener("hashchange", () => { const r = byId(location.hash.slice(1)); if (r){ current = r; renderAll(); } });
+
+buildPicker();
+renderAll();
+</script>
+</body>
+</html>
