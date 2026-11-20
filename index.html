@@ -33,7 +33,7 @@
   .pill:focus-within{outline:2px solid var(--accent);outline-offset:2px}
   .rname{font:700 22px Inter,sans-serif;margin:0 0 12px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
-  .meat label{display:block;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .meat label{display:block;font-size:15px;font-weight:600;color:var(--muted)}
   .meat-row{display:flex;align-items:center;gap:10px;margin-top:8px}
   .meat input{flex:1;min-width:0;font:700 34px Inter,sans-serif;color:var(--ink);background:transparent;
     border:none;border-bottom:3px solid var(--accent);padding:2px 0;outline:none}
@@ -114,8 +114,8 @@ const SHEETS = {
 
 /* ---------- Input modes ---------- */
 const MODES = {
-  meat:   {label:"Total meat", unit:"lbs", quick:[5,10,25,50,100], step:1},
-  batch:  {label:"Total batch weight", unit:"lbs", quick:[5,10,25,50,100], step:1},
+  meat:   {label:"How much are you making today?", unit:"lbs", quick:[5,10,25,50,100], step:1},
+  batch:  {label:"How much are you making today?", unit:"lbs", quick:[5,10,25,50,100], step:1},
   season: {label:"Seasoning to make", unit:"lbs", quick:[0.5,1,2,5], step:0.5},
   mult:   {label:"Batches", unit:"×", quick:[0.5,1,2,3,4], step:0.5}
 };
@@ -396,14 +396,31 @@ function baseLabel(){
   return `per ${b} lb batch`;
 }
 
-function renderList(){
+function renderList(animate){
   const s = rs(), factor = (parseFloat(s.q)||0) / current.base;
-  list.innerHTML = "";
+  // Remember where each row was, so moved rows can glide to their new spot.
+  const before = {};
+  if (animate) list.querySelectorAll("li[data-i]").forEach(li => before[li.dataset.i] = li.getBoundingClientRect().top);
+
+  // Keep section headers in place; within each section, unchecked items first, checked at the bottom.
+  const blocks = [[]];
   current.items.forEach((it, i) => {
+    if (typeof it === "string") blocks.push([i]); else blocks[blocks.length-1].push(i);
+  });
+  const order = [];
+  blocks.forEach(b => {
+    const head = typeof current.items[b[0]] === "string" ? [b.shift()] : [];
+    order.push(...head, ...b.filter(i => !s.done.includes(i)), ...b.filter(i => s.done.includes(i)));
+  });
+
+  list.innerHTML = "";
+  order.forEach(i => {
+    const it = current.items[i];
     const li = document.createElement("li");
     if (typeof it === "string"){ li.className = "sec"; li.textContent = it; list.appendChild(li); return; }
     const [name, amt, unit, note] = it;
     const out = amount(amt*factor, unit), base = amount(amt, unit);
+    li.dataset.i = i;
     if (s.done.includes(i)) li.className = "done";
     li.innerHTML = `<span class="box"></span><span class="name"><b></b><small></small></span>
       <span class="amt"><b></b><small></small></span>`;
@@ -414,10 +431,21 @@ function renderList(){
     li.onclick = () => {
       const k = s.done.indexOf(i);
       k >= 0 ? s.done.splice(k,1) : s.done.push(i);
-      li.classList.toggle("done"); save();
+      save(); renderList(true);
     };
     list.appendChild(li);
   });
+
+  if (animate && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    list.querySelectorAll("li[data-i]").forEach(li => {
+      const old = before[li.dataset.i];
+      if (old === undefined) return;
+      const dy = old - li.getBoundingClientRect().top;
+      if (!dy) return;
+      li.animate([{transform:`translateY(${dy}px)`},{transform:"translateY(0)"}],
+        {duration:300, easing:"cubic-bezier(.2,.8,.2,1)"});
+    });
+  }
 }
 
 function renderAll(){
@@ -435,7 +463,7 @@ function renderAll(){
     q.appendChild(b);
   });
   let desc = current.desc || "";
-  if (current.mode === "batch") desc = (desc ? desc+" " : "") + "Enter the total batch weight; the meat amounts are listed too.";
+  if (current.mode === "batch") desc = (desc ? desc+" " : "") + "Enter the total batch weight in lbs; the meat amounts are listed too.";
   $("desc").textContent = desc;
   $("tips").innerHTML = "";
   (current.tips || []).forEach(t => { const p = document.createElement("p"); p.textContent = t; $("tips").appendChild(p); });
