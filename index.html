@@ -20,6 +20,29 @@
   header{background:var(--brand);color:var(--brand-ink);padding:22px 18px 18px}
   header h1{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;font-size:28px;margin:0;letter-spacing:.5px}
   header p{margin:4px 0 0;opacity:.85;font-size:14px}
+  header{position:relative}
+  .fb-btn{position:absolute;top:16px;right:14px;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.55);
+    border-radius:999px;padding:7px 13px;font:600 13px Inter,sans-serif;cursor:pointer}
+  .fb-btn:hover{background:rgba(255,255,255,.28)}
+  header h1{padding-right:120px}
+  .fb-back{position:fixed;inset:0;background:rgba(20,12,8,.55);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:12px}
+  .fb-back.open{display:flex}
+  @media (min-width:560px){ .fb-back{align-items:center} }
+  .fb{background:var(--card);color:var(--ink);width:100%;max-width:480px;border-radius:18px;padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .fb h2{margin:0 0 4px;font:700 20px Inter,sans-serif}
+  .fb p.sub{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .fb label{display:block;font-size:13px;font-weight:600;margin:12px 0 6px}
+  .fb input,.fb textarea{width:100%;font:16px Inter,sans-serif;color:var(--ink);background:var(--bg);
+    border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;outline:none}
+  .fb input:focus,.fb textarea:focus{border-color:var(--accent)}
+  .fb textarea{min-height:130px;resize:vertical}
+  .fb .row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+  .fb button{border-radius:10px;padding:11px 16px;font:600 15px Inter,sans-serif;cursor:pointer;border:1.5px solid var(--line);background:transparent;color:var(--ink)}
+  .fb button.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .fb button:disabled{opacity:.6;cursor:default}
+  .fb .msg{font-size:14px;margin-top:12px;min-height:1em}
+  .fb .msg.err{color:#c0392b}
+  .fb .hp{position:absolute;left:-9999px}
   main{max-width:640px;margin:0 auto;padding:16px}
   .pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
   .pill{position:relative;display:inline-flex;align-items:center;max-width:100%;background:var(--card);color:var(--ink);
@@ -70,6 +93,7 @@
 </head>
 <body>
 <header>
+  <button class="fb-btn" id="fbOpen" type="button">Submit feedback</button>
   <h1>Herndon Sausage</h1>
   <p>Pick a recipe, enter your amount, and every ingredient scales.</p>
 </header>
@@ -101,6 +125,22 @@
   <p class="src" id="src"></p>
 </main>
 
+<div class="fb-back" id="fbBack" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+  <form class="fb" id="fbForm" novalidate>
+    <h2 id="fbTitle">Submit feedback</h2>
+    <p class="sub">Questions, recipe tweaks, or something that looks off? Let me know.</p>
+    <label for="fbEmail">Your email (so I can reply)</label>
+    <input id="fbEmail" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+    <label for="fbText">Feedback</label>
+    <textarea id="fbText" name="message" required placeholder="Type your feedback here"></textarea>
+    <input class="hp" type="text" name="_honey" id="fbHoney" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <div class="msg" id="fbMsg" aria-live="polite"></div>
+    <div class="row">
+      <button type="button" id="fbCancel">Cancel</button>
+      <button type="submit" class="primary" id="fbSend">Send</button>
+    </div>
+  </form>
+</div>
 <script>
 /* ---------- Sources ---------- */
 const SHEETS = {
@@ -482,6 +522,51 @@ window.addEventListener("hashchange", () => { const r = byId(location.hash.slice
 
 buildPicker();
 renderAll();
+
+/* ---------- Feedback ---------- */
+const FEEDBACK_ENDPOINT = "https://formsubmit.co/ajax/bentherndon@gmail.com";
+(() => {
+  const back = $("fbBack"), form = $("fbForm"), msg = $("fbMsg"), send = $("fbSend");
+  const email = $("fbEmail"), text = $("fbText");
+  const open = () => { back.classList.add("open"); msg.textContent = ""; msg.className = "msg"; send.disabled = false; send.textContent = "Send"; setTimeout(() => email.focus(), 50); };
+  const close = () => back.classList.remove("open");
+  $("fbOpen").onclick = open;
+  $("fbCancel").onclick = close;
+  back.addEventListener("click", e => { if (e.target === back) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && back.classList.contains("open")) close(); });
+  const err = t => { msg.textContent = t; msg.className = "msg err"; };
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) { err("Please enter a valid email so I can reply."); email.focus(); return; }
+    if (!text.value.trim()) { err("Please type your feedback."); text.focus(); return; }
+    if ($("fbHoney").value) { close(); return; }
+    send.disabled = true; send.textContent = "Sending…"; msg.textContent = ""; msg.className = "msg";
+    try {
+      const res = await fetch(FEEDBACK_ENDPOINT, {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "Accept": "application/json"},
+        body: JSON.stringify({
+          email: email.value.trim(),
+          message: text.value.trim(),
+          recipe: current.name,
+          _subject: "Sausage calculator feedback",
+          _replyto: email.value.trim(),
+          _template: "table",
+          _captcha: "false"
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false || data.success === "false") throw new Error(data.message || "send failed");
+      msg.textContent = "Thanks! Your feedback was sent."; msg.className = "msg";
+      send.textContent = "Sent"; text.value = "";
+      setTimeout(close, 1800);
+    } catch (ex) {
+      send.disabled = false; send.textContent = "Send";
+      err("Sorry, it didn't send. Check your connection and try again.");
+    }
+  });
+})();
 </script>
 </body>
 </html>
