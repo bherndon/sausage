@@ -143,14 +143,7 @@
 </div>
 <script>
 /* ---------- Sources ---------- */
-const SHEETS = {
-  herndon: ["Herndon Sausage", "https://docs.google.com/spreadsheets/d/1PKu_M5QNbqcWKr-hHxbPBNExPWAbYfaGRQXtMjkVXpg/edit"],
-  sr:      ["Sausage Recipes", "https://docs.google.com/spreadsheets/d/1XeGXeD6-U8Nal5G4MpYWSpU432kZI7VrVDN1BdcaO08/edit"],
-  bth:     ["BTH Flavored Sausages", "https://docs.google.com/spreadsheets/d/1XhR1N2BTL6E2E-gP1d_TopNLFD98DAuokcZOMEDWTgQ/edit"],
-  tbh:     ["TBH Homemade Sausages", "https://docs.google.com/spreadsheets/d/1o0wevOZ_oI7fTnPyBG3vqPaq2MHQHJgYk6KKNK4vTY8/edit"],
-  jerky:   ["Jerky Recipe", "https://docs.google.com/spreadsheets/d/14my98TSc-Pv6zmNpZn5H1D3B0GgCR4QaulkR1bLCoJ4/edit"],
-  bbq:     ["BBQ Recipes", "https://drive.google.com/file/d/0B1wHL0wlclztTFRYeFZEVUM1dFcxVWY3emhQREZXbXUwN1Jv/view"]
-};
+const SHEETS = {}; // Drive links are kept off the public site
 
 /* ---------- Input modes ---------- */
 const MODES = {
@@ -507,9 +500,11 @@ function renderAll(){
   $("desc").textContent = desc;
   $("tips").innerHTML = "";
   (current.tips || []).forEach(t => { const p = document.createElement("p"); p.textContent = t; $("tips").appendChild(p); });
-  const [title, url] = SHEETS[current.src];
-  $("src").innerHTML = `From your <a href="${url}"></a> sheet.`;
-  $("src").querySelector("a").textContent = title;
+  const [title, url] = SHEETS[current.src] || [];
+  if (url){
+    $("src").innerHTML = `From your <a href="${url}"></a> sheet.`;
+    $("src").querySelector("a").textContent = title;
+  } else $("src").textContent = "";
   qty.value = rs().q;
   renderList(); save();
 }
