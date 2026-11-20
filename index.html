@@ -535,6 +535,17 @@ const FEEDBACK_ENDPOINT = "https://formsubmit.co/ajax/bentherndon@gmail.com";
   back.addEventListener("click", e => { if (e.target === back) close(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && back.classList.contains("open")) close(); });
   const err = t => { msg.textContent = t; msg.className = "msg err"; };
+  // Backup: a normal form post (no background request), which FormSubmit always accepts.
+  function classicSubmit(){
+    const f = document.createElement("form");
+    f.method = "POST"; f.action = FEEDBACK_ENDPOINT.replace("/ajax/", "/");
+    const add = (n, v) => { const i = document.createElement("input"); i.type = "hidden"; i.name = n; i.value = v; f.appendChild(i); };
+    add("email", email.value.trim()); add("message", text.value.trim()); add("recipe", current.name);
+    add("_subject", "Sausage calculator feedback"); add("_replyto", email.value.trim());
+    add("_template", "table"); add("_captcha", "false");
+    add("_next", location.href.split("#")[0] + "#" + current.id);
+    document.body.appendChild(f); f.submit();
+  }
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -572,7 +583,7 @@ const FEEDBACK_ENDPOINT = "https://formsubmit.co/ajax/bentherndon@gmail.com";
       send.disabled = false; send.textContent = "Send";
       if (ex.server) err("Sorry, it didn't send: " + ex.message);
       else if (!/github\.io$/.test(location.hostname)) err("Feedback can't send from this preview. Open the public site at bherndon.github.io/sausage to send it.");
-      else err("Couldn't reach the email service. Check your connection and try again.");
+      else classicSubmit();
     }
   });
 })();
