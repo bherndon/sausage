@@ -557,13 +557,22 @@ const FEEDBACK_ENDPOINT = "https://formsubmit.co/ajax/bentherndon@gmail.com";
         })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.success === false || data.success === "false") throw new Error(data.message || "send failed");
+      if (!res.ok || data.success === false || data.success === "false") {
+        const m = String(data.message || "");
+        if (/activat/i.test(m)) {
+          msg.textContent = "Almost there: the site owner needs to activate this form (check email). Try again after that.";
+          msg.className = "msg"; send.disabled = false; send.textContent = "Send"; return;
+        }
+        throw Object.assign(new Error(m || ("HTTP " + res.status)), {server: true});
+      }
       msg.textContent = "Thanks! Your feedback was sent."; msg.className = "msg";
       send.textContent = "Sent"; text.value = "";
       setTimeout(close, 1800);
     } catch (ex) {
       send.disabled = false; send.textContent = "Send";
-      err("Sorry, it didn't send. Check your connection and try again.");
+      if (ex.server) err("Sorry, it didn't send: " + ex.message);
+      else if (!/github\.io$/.test(location.hostname)) err("Feedback can't send from this preview. Open the public site at bherndon.github.io/sausage to send it.");
+      else err("Couldn't reach the email service. Check your connection and try again.");
     }
   });
 })();
