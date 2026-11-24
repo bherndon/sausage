@@ -6,7 +6,7 @@ A simple, phone-friendly calculator for the Herndon family's sausage, jerky and 
 
 ## Features
 
-- **40 recipes in 7 categories**, picked from pill-style dropdowns: Family, Pork & Venison, Flavored, Burgers, Jerky, BBQ and Sides.
+- **41 recipes in 8 categories**, picked from pill-style dropdowns: Family, Pork & Venison, Flavored, Burgers, Jerky, Brine, BBQ and Sides.
 - **Instant scaling:** enter pounds of meat, total batch weight, pounds of seasoning, or number of batches, depending on the recipe.
 - **Easy-to-read units:** spices show in tsp, tbsp or cups (whichever is easiest to measure), and weighed ingredients show in oz, lb and grams.
 - **Check-off list:** tap an ingredient as you add it. Checked items move to the bottom, so what's left is always at the top.
@@ -24,6 +24,7 @@ A simple, phone-friendly calculator for the Herndon family's sausage, jerky and 
 | Flavored | Spinach & Feta, Apple / Cranberry, Bacon Cheddar, Sun-Dried Tomato & Feta | Total batch weight |
 | Burgers | Bacon Venison, Bacon Cheddar Venison, Jalapeño Cheddar, Mushroom Swiss, Blue Cheese, Roasted Garlic & Feta | Total batch weight |
 | Jerky | Jerky Seasoning | Pounds of seasoning |
+| Brine | Apple Spice Turkey Brine | Batches |
 | BBQ | Mustard Sauce, Red Sauce, Pork Injection, Pork Rub, Brisket Rub, Chicken Brine, Chicken Wings, Chicken Thighs | Batches |
 | Sides | Mac and Cheese, Pinto Beans, Bean Seasoning, Cole Slaw | Batches |
 

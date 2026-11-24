@@ -291,6 +291,18 @@ const RECIPES = [
     items:[["Salt",3.125,"lb"],["Garlic",0.2625,"lb"],["Black pepper",1.425,"lb"],["Onion powder",0.0625,"lb"],
       ["Brown sugar",0.1,"lb"],["Meat tenderizer",0.0375,"lb"]]},
 
+  /* ---- Brine ---- */
+  { id:"turkey-brine", group:"Brine", name:"Apple Spice Turkey Brine", mode:"mult", base:1, start:1,
+    desc:"Hey Grill Hey's apple spice brine. One batch makes just over a gallon. Double it for a big bird so the turkey stays fully covered.",
+    tips:["Boil the first group in a large stockpot, then take it off the heat and stir in the cold apple juice and ice. Let it cool completely before the turkey goes in.",
+      "Brine about 1 hour per pound: at least 8 hours, no more than 18. Keep the turkey fully submerged and everything below 40°F.",
+      "Pat the turkey completely dry and drizzle with oil or melted butter for crispier skin. No extra salt needed before smoking.",
+      "Pre-brined or injected turkey (e.g. Butterball): cut the salt in half."],
+    items:["Boil",["Water",4,"cup"],["Apple juice",4,"cup"],["Kosher salt",1.5,"cup","or 1 cup table salt"],["Brown sugar",0.5,"cup"],
+      ["Ground cinnamon",1,"tbsp"],["Black peppercorns",1,"tbsp"],["Candied ginger",1,"tbsp","or fresh"],["Cloves",10,"whole"],
+      ["Rosemary",2,"sprigs"],["Sage",2,"sprigs"],["Thyme",2,"sprigs"],
+      "After boiling",["Ice cubes",6,"cup"],["Cold apple juice",4,"cup"],["Large apple, quartered",1,"whole"],["Yellow onion, quartered",1,"whole"]]},
+
   /* ---- BBQ ---- */
   { id:"mustard-sauce", group:"BBQ sauces, rubs & brines", name:"Mustard Sauce", mode:"mult", base:1, start:1, src:"bbq",
     items:[["Yellow mustard",15,"cup"],["Apple cider vinegar",3,"cup"],["Lemon juice",0.75,"cup"],["Corn syrup",0.5,"cup"],
@@ -390,6 +402,7 @@ const SHORT = {
   "Flavored sausages (by weight)":"Flavored",
   "Burgers (by weight)":"Burgers",
   "Jerky":"Jerky",
+  "Brine":"Brine",
   "BBQ sauces, rubs & brines":"BBQ",
   "BBQ sides":"Sides"
 };
